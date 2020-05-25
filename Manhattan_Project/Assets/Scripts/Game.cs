@@ -1,68 +1,79 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Game : MonoBehaviour
 {
+    public Unit[] units;
     [SerializeField] private Player[] players;
-    [SerializeField] private Transform gameField;
 
-    public static Material selectedMat;
+
+    [Header("UI")]
+    public GameObject buyMenu;
+    public Text[] unitAmounts;
+
+    private int currentPlayerIndex = 0;
 
     // Start is called before the first frame update
     void Start()
     {
-        players[0] = new Player();
-        players[1] = new Player();
+        buyMenu.SetActive(false);
 
-        players[0].Init(10, 5, null, GetAllChildren(GetChildByTag(gameField, "P1_Fields")), new List<string>() { "P2_Fields" });
-        players[1].Init(10, 5, null, GetAllChildren(GetChildByTag(gameField, "P2_Fields")), new List<string>() { "P1_Fields" });
+        foreach (Player p in players)
+        {
+            p.gameObject.SetActive(false);
+        }
+
+        players[currentPlayerIndex].gameObject.SetActive(true);
     }
 
     // Update is called once per frame
     void Update()
     {
-        foreach(Player player in players)
+
+    }
+
+    public void BuyUnit(int ID)
+    {
+        if (units[ID].cost <= players[currentPlayerIndex].money)
         {
-            //BUYPHASE
-            while(player.GetPhase() == Player.PlayerPhase.BUY)
-            {
-                player.BuyPhase();
-            }
-            //COMBAT MOVEMENT
-            while (player.GetPhase() == Player.PlayerPhase.COMBATMOV)
-            {
-                player.CombatMovPhase();
-            }
-            //COMBAT
-            //NON COMBAT MOVEMENT
-            //SET TROOPS
+            players[currentPlayerIndex].money -= units[ID].cost;
+            players[currentPlayerIndex].boughtUnits[ID]++;
+            unitAmounts[ID].text = "x" + players[currentPlayerIndex].boughtUnits[ID];
+            players[currentPlayerIndex].moneyText.text = players[currentPlayerIndex].money.ToString();
         }
     }
-    
-    Transform GetChildByTag(Transform t, string tag)
+
+    public void SellUnit(int ID)
     {
-        if (t.childCount == 0) return null;
-
-        for (int i = 0; i < t.childCount; i++)
+        if (players[currentPlayerIndex].boughtUnits[ID] > 0)
         {
-            if (t.GetChild(i).tag == tag)
-                return t.GetChild(i);
+            players[currentPlayerIndex].money += units[ID].cost;
+            players[currentPlayerIndex].boughtUnits[ID]--;
+            unitAmounts[ID].text = "x" + players[currentPlayerIndex].boughtUnits[ID];
+            players[currentPlayerIndex].moneyText.text = players[currentPlayerIndex].money.ToString();
         }
-
-        return null;
     }
-    List<Transform> GetAllChildren(Transform t)
+
+    public Unit GetUnit(UnitType ID)
     {
-        if (t.childCount == 0) return null;
+        int id = (int)ID;
 
-        List<Transform> children = new List<Transform>();
+        if (id < units.Length)
+            return units[id];
 
-        for(int i = 0; i < t.childCount; i++)
-        {
-            children.Add(t.GetChild(i));
-        }
+        return new Unit();
+    }
 
-        return children;
+    public void ToggleBuyMenu()
+    {
+        buyMenu.SetActive(!buyMenu.activeSelf);
+    }
+
+    public void NextPlayer()
+    {
+        currentPlayerIndex++;
     }
 }

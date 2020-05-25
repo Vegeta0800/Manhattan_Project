@@ -1,90 +1,111 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
-    public enum PlayerPhase
+    [HideInInspector] public int[] boughtUnits;
+    public int money;
+    public int income;
+    public Material color;
+
+    public Text moneyText;
+    public Text incomeText;
+
+    [SerializeField] private StartUnits[] startUnits;
+    [SerializeField] private Game game;
+
+    // Start is called before the first frame update
+    void Start()
     {
-        BUY = 0,
-        COMBATMOV = 1,
-        FIGHT = 2,
-        NONCOMBATMOV = 3,
-        SET = 4,
-        ENDMOVE = 5
-    }
+        boughtUnits = new int[4];
+        moneyText.text = money.ToString();
+        incomeText.text = income.ToString();
 
-    private int money;
-    private int income;
-
-    private List<string> enemyfieldTags;
-
-    private List<Player> allies;
-    private List<Transform> fields;
-
-    private List<Transform> units;
-    private List<int> boughtUnits;
-    private PlayerPhase currentPhase;
-
-    public void Init(int startMoney, int incomeIn, List<Player> alliesIn, List<Transform> fieldsIn, List<string> enemyfieldTagsIn)
-    {
-        money = startMoney;
-        income = incomeIn;
-        enemyfieldTags = enemyfieldTagsIn;
-
-        if(alliesIn != null)
-            allies = alliesIn;
-        if (fieldsIn != null)
-            fields = fieldsIn;
-    }
-
-    public void BuyPhase()
-    {
-        if (Input.GetKeyDown(KeyCode.A))
+        foreach(StartUnits start in startUnits)
         {
-            Debug.Log("Bought Soldier for 1");
-            boughtUnits.Add(0);
-        }
-        else if (Input.GetKeyDown(KeyCode.S))
-        {
-            Debug.Log("Bought Tank for 2");
-            boughtUnits.Add(1);
-        }
-        else if (Input.GetKeyDown(KeyCode.D))
-        {
-            Debug.Log("Bought Plane for 3");
-            boughtUnits.Add(2);
-        }
-
-        if(Input.GetKeyDown(KeyCode.E))
-        {
-            currentPhase = PlayerPhase.COMBATMOV;
+            SpawnUnits(start.amount, start.type, start.factory);
         }
     }
 
-    public void CombatMovPhase()
+    // Update is called once per frame
+    void Update()
     {
-        if (Input.GetMouseButton(0))
+        if (Input.GetKeyDown(KeyCode.B))
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
+            game.ToggleBuyMenu();
+        }
+    }
 
-            if (Physics.Raycast(ray, out hit))
-            {
-                if (enemyfieldTags.Contains(hit.transform.tag))
+    private void SpawnUnits(int amount, UnitType type, Transform factory)
+    {
+        Transform spawnpoint = factory.GetChild(0);
+
+        switch (type)
+        {
+            case UnitType.Soldier:
+
+                for(int i = 0; i < factory.childCount; i++)
                 {
-                    hit.transform.GetComponent<MeshRenderer>().material = Game.selectedMat;
+                    if(factory.GetChild(i).name == "Soldier_SP")
+                    {
+                        spawnpoint = factory.GetChild(i);
+                        break;
+                    }
                 }
-                else
-                {
-                }
-            }
-        }
-    }
 
-    public PlayerPhase GetPhase()
-    {
-        return currentPhase;
+                GameObject sol = Instantiate(game.units[0].prefab, spawnpoint.position, Quaternion.identity, spawnpoint);
+                sol.GetComponent<Renderer>().material = color;
+                sol.name = amount.ToString();
+                break;
+
+            case UnitType.Tank:
+
+                for (int i = 0; i < factory.childCount; i++)
+                {
+                    if (factory.GetChild(i).name == "Tank_SP")
+                    {
+                        spawnpoint = factory.GetChild(i);
+                        break;
+                    }
+                }
+
+                GameObject tan = Instantiate(game.units[1].prefab, spawnpoint.position, Quaternion.identity, spawnpoint);
+                tan.GetComponent<Renderer>().material = color;
+                tan.name = amount.ToString();
+                break;
+
+            case UnitType.Plane:
+
+                for (int i = 0; i < factory.childCount; i++)
+                {
+                    if (factory.GetChild(i).name == "Plane_SP")
+                    {
+                        spawnpoint = factory.GetChild(i);
+                        break;
+                    }
+                }
+
+                GameObject pla = Instantiate(game.units[2].prefab, spawnpoint.position, Quaternion.identity, spawnpoint);
+                pla.GetComponent<Renderer>().material = color;
+                pla.name = amount.ToString();
+                break;
+
+            case UnitType.Boat:
+
+                for (int i = 0; i < factory.childCount; i++)
+                {
+                    if (factory.GetChild(i).name == "Boat_SP")
+                    {
+                        spawnpoint = factory.GetChild(i);
+                        break;
+                    }
+                }
+
+                GameObject boa = Instantiate(game.units[3].prefab, spawnpoint.position, Quaternion.identity, spawnpoint);
+                boa.GetComponent<Renderer>().material = color;
+                boa.name = amount.ToString();
+                break;
+        }
     }
 }
